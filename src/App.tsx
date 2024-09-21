@@ -1,26 +1,32 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import {Box} from '@mui/joy'
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { Sidebar, SidebarItem } from './Components';
+import { APIResponse, getApplication } from './Util';
+import { HomePage } from './Pages/Home';
+import { ShortcutPage } from './Pages/ShortcutPage';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  const [sidebarItems, setSidebarItems] = React.useState<SidebarItem[]>([])
+
+  React.useEffect(()=>{
+	getApplication().then(resp => {
+		if(resp.data)
+			setSidebarItems(resp.data.map(item => {
+			return {iconPath: "", label: item.name, path: `/application/${item.id}`}
+		}))
+	})
+  }, [])
+
+  return <Box className='App' display={'grid'} gridTemplateColumns={'10% auto'} width={'100vw'} height={'100vh'} border={'solid'} padding={2} gap={2}>
+    <BrowserRouter>
+      <Sidebar sidebarItems={sidebarItems} />
+      <Routes>
+        <Route path='/' element={<HomePage />} />
+		<Route path='/application/:applicationId' element={<ShortcutPage />} />
+      </Routes>
+    </BrowserRouter>
+  </Box>
 }
 
 export default App;
