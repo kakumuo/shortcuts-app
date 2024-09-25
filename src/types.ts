@@ -14,10 +14,11 @@ export interface IShortcut {
     applicationId:string,
     shortcutGroupId:string,
     name:string, 
-    keyCombination: string[], 
+    keyCombination: string[]
     ctrlMod: boolean, 
     shiftMod: boolean, 
-    altMod: boolean
+    altMod: boolean,
+    winMod:boolean
 }
 
 export interface ISession {
@@ -27,3 +28,10 @@ export interface ISession {
     initialLogin: Date, 
     lastLogin: Date,
 }
+
+
+/*
+ctrl + a
+ctrl + a => z
+ctrl + a || f1
+*/

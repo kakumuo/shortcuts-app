@@ -9,7 +9,8 @@ const ShortcutSchema = new Schema<IShortcut>({
     keyCombination: [String], 
     ctrlMod: {type: Boolean}, 
     shiftMod: {type: Boolean}, 
-    altMod: {type: Boolean}
+    altMod: {type: Boolean},
+    winMod: {type: Boolean}
 })
 
 const ShortcutGroupSchema = new Schema<IShortcutGroup>({

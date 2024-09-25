@@ -10,9 +10,9 @@ export interface APIResponse<T> {
 
 
 // application
-export const getApplication = async (id?:string):Promise<APIResponse<IApplication>> => {
+export const getApplication = async (params: {id?:string, searchFilter?:string}):Promise<APIResponse<IApplication>> => {
 
-    const resp = await fetch(`${BASE_URI}/application${id ? `?id=${id}` : ""}`, {
+    const resp = await fetch(`${BASE_URI}/application?` + new URLSearchParams(params), {
         headers: {'Content-Type': 'application/json'}
     })
 
@@ -45,15 +45,8 @@ export const deleteApplication = async (id:string):Promise<APIResponse<IApplicat
 
 
 // shortcut groups
-export const getShortcutGroups = async (applicationId?:string, id?:string):Promise<APIResponse<IShortcutGroup>> => {
-    const targetParams:Record<string, string> = {}
-    if(applicationId)
-        targetParams['applicationId'] = applicationId;
-
-    if(id)
-        targetParams['id'] = id;
-
-    const resp = await fetch(`${BASE_URI}/shortcutGroup?` + new URLSearchParams(targetParams), {
+export const getShortcutGroups = async (params: {applicationId?:string, id?:string, searchFilter?:string}):Promise<APIResponse<IShortcutGroup>> => {
+    const resp = await fetch(`${BASE_URI}/shortcutGroup?` + new URLSearchParams(params), {
         headers: {'Content-Type': 'application/json'}
     })
 
@@ -62,18 +55,8 @@ export const getShortcutGroups = async (applicationId?:string, id?:string):Promi
 }
 
 // shortcuts
-export const getShortcuts = async (applicationId?:string, shortcutGroupId?:string, id?:string):Promise<APIResponse<IShortcut>> => {
-    const targetParams:Record<string, string> = {}
-    if(applicationId)
-        targetParams['applicationId'] = applicationId;
-
-    if(shortcutGroupId)
-        targetParams['shortcutGroupId'] = shortcutGroupId;
-
-    if(id)
-        targetParams['id'] = id;
-
-    const resp = await fetch(`${BASE_URI}/shortcut${id ? `?id=${id}` : ""}`, {
+export const getShortcuts = async (params:{applicationId?:string, shortcutGroupId?:string, id?:string, searchFilter?:string}):Promise<APIResponse<IShortcut>> => {
+    const resp = await fetch(`${BASE_URI}/shortcut?` + new URLSearchParams(params), {
         headers: {'Content-Type': 'application/json'}
     })
 

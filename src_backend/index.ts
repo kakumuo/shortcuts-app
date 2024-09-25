@@ -1,4 +1,4 @@
-import express, { application } from 'express';
+import express from 'express';
 import cors from 'cors';
 import config from './config.json';
 
@@ -22,7 +22,6 @@ app.get("/session", async(req, res) => {
 
     const sessionInfo = await SessionModel.findOne({_id: id});
     const message:string = sessionInfo ? `Retreived session '${id}'` : `Session '${id}' not found`;
-    console.log(message)
     return res.json(formatMessage(0, message, sessionInfo));
 })
 
@@ -49,14 +48,14 @@ app.post("/session", async(req, res) => {
 
 // get application
 app.get("/application", async(req, res) => {
-    const {id} = req.query; 
+    const {id, searchFilter} = req.query; 
 
-    let applicationInfo; 
-    if(id && id != 'undefined') applicationInfo = await ApplicationModel.find({id: id});
-    else applicationInfo = await ApplicationModel.find({});
+    let targetQuery = {}
+    if(id && id != 'undefined') targetQuery['id'] = id;
+    if(searchFilter && searchFilter != 'undefined') targetQuery['name'] = {$regex: searchFilter, $options: "i"};
 
-    const message:string = applicationInfo ? `Retreived application '${id}'` : `Application '${id}' not found`;
-    return res.json(formatMessage(0, message, applicationInfo));
+    const applicationInfo = await ApplicationModel.find(targetQuery);
+    return res.json(formatMessage(0, "Retreived applciation", applicationInfo));
 })
 
 // upsert application
@@ -89,16 +88,50 @@ app.delete("/application", async(req, res) => {
  */
 // get shortcut
 app.get("/shortcut", async(req, res) => {
-    const {id, applicationId, shortcutGroupId} = req.query; 
+    const {id, applicationId, shortcutGroupId, searchFilter} = req.query; 
 
     let targetQuery = {};
     
     if(id && id != 'undefined') targetQuery["_id"] = id; 
     if(applicationId && applicationId != 'undefined') targetQuery["applicationId"] = applicationId; 
-    if(shortcutGroupId && shortcutGroupId != 'undefined') targetQuery["shortcutGroupId"] = shortcutGroupId; 
+    if(shortcutGroupId && shortcutGroupId != 'undefined') targetQuery["shortcutGroupId"] = shortcutGroupId;
 
-    const shortcutResp = await ShortcutModel.find(targetQuery)
-    return res.json(formatMessage(0, "Retrieving records", shortcutResp));
+    if(!searchFilter || searchFilter == 'undefined'){
+        const shortcutResp = await ShortcutModel.find(targetQuery)
+        return res.json(formatMessage(0, "Retrieving records", shortcutResp));
+    }else {
+        /*
+            select * from shortcuts s
+            inner join shortcutgroups sg
+            on s.shortcutId = sg.id
+            where s.applicationId = <applicationId>
+            and (
+                sg.name like <searchFilter>
+                or s.name like <searchFilter>
+                or <searchFilter> in s.keyCombination
+            )
+        */
+
+        const shortcutResp = await ShortcutModel.aggregate([
+            {$lookup: {from: "shortcutgroups", localField: "shortcutGroupId", foreignField: "id", as: "group"}}, 
+            {
+                $match: {
+                    $and: [
+                        {applicationId: applicationId},
+                        {$or: [
+                            {name: {$regex: searchFilter, $options: "i"}},
+                            {keyCombnation: {$regex: searchFilter, $options: "i"}},
+                            {"group.name": {$regex: searchFilter, $options: "i"}}
+                        ]}
+                    ]
+                }
+            }, 
+            {$project: {group: 0}}
+        ])
+
+        return res.json(formatMessage(0, "Retrieving records", shortcutResp));
+    }
+
 })
 
 // upsert shortcut
@@ -142,14 +175,13 @@ app.delete("/shortcut", async(req, res) => {
  */
 // get shortcut group
 app.get("/shortcutGroup", async(req, res) => {
-    const {id, applicationId} = req.query; 
+    const {id, applicationId, searchFilter} = req.query; 
 
     let targetQuery = {};
     
     if(id && id != 'undefined') targetQuery["_id"] = id; 
     if(applicationId  && applicationId != 'undefined') targetQuery["applicationId"] = applicationId; 
-
-    console.log(targetQuery)
+    if(searchFilter && searchFilter != 'undefined') targetQuery['name'] = {$regex: searchFilter, $options:  "i"}
 
     const shortcutResp = await ShortcutGroupModel.find(targetQuery)
     return res.json(formatMessage(0, "Retrieving records", shortcutResp));
