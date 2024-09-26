@@ -136,7 +136,7 @@ app.get("/shortcut", async(req, res) => {
 
 // upsert shortcut
 app.post("/shortcut", async(req, res) => {
-    const {altMod, applicationId, ctrlMod, id, keyCombination, name, shiftMod, shortcutGroupId}:IShortcut = req.body; 
+    const {applicationId, id, name, shortcutGroupId, altSequence, keySequence}:IShortcut = req.body; 
 
     if(!applicationId)
         return res.json(formatMessage(ERR_FIELD_NOT_FOUND, 'applicationId'))
@@ -146,14 +146,12 @@ app.post("/shortcut", async(req, res) => {
 
     const applicationObj = await ShortcutModel.updateOne({_id: id}, 
         {
-            altMod: altMod,
             applicationId: applicationId,
-            ctrlMod: ctrlMod,
             id: id,
-            keyCombination: keyCombination,
             name: name,
-            shiftMod: shiftMod,
-            shortcutGroupId: shortcutGroupId            
+            shortcutGroupId: shortcutGroupId, 
+            altSequence: altSequence, 
+            keySequence: keySequence            
         }, {upsert: true}
     )
 

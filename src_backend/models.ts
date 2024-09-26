@@ -1,16 +1,21 @@
 import {Schema, model} from "mongoose";
-import {IApplication, IShortcut, IShortcutGroup, ISession} from '../src/types'
+import {IApplication, IShortcut, IShortcutGroup, ISession, IShortcutKey} from '../src/types'
 
 // APP DATA
+const ShortcutKey = new Schema<IShortcutKey>({
+    keys: [String], 
+    ctrlMod: Boolean, 
+    altMod: Boolean, 
+    shiftMod: Boolean, 
+    winMod: Boolean
+})
+
 const ShortcutSchema = new Schema<IShortcut>({
     shortcutGroupId: {type: String},
     applicationId: {type: String}, 
     name: {type: String}, 
-    keyCombination: [String], 
-    ctrlMod: {type: Boolean}, 
-    shiftMod: {type: Boolean}, 
-    altMod: {type: Boolean},
-    winMod: {type: Boolean}
+    keySequence: [ShortcutKey], 
+    altSequence: [ShortcutKey],
 })
 
 const ShortcutGroupSchema = new Schema<IShortcutGroup>({
@@ -20,7 +25,6 @@ const ShortcutGroupSchema = new Schema<IShortcutGroup>({
 const ApplicationSchema = new Schema<IApplication>({
     name: {type: String}
 })
-
 
 // SESSION
 const SessionSchema = new Schema<ISession>({

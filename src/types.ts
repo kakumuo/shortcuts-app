@@ -14,7 +14,12 @@ export interface IShortcut {
     applicationId:string,
     shortcutGroupId:string,
     name:string, 
-    keyCombination: string[]
+    keySequence: IShortcutKey[]
+    altSequence: IShortcutKey[] //alternate sequence
+}
+
+export interface IShortcutKey {
+    keys:string[], 
     ctrlMod: boolean, 
     shiftMod: boolean, 
     altMod: boolean,
