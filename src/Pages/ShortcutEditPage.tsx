@@ -1,11 +1,12 @@
 import React from 'react'
 import { useLocation, useParams } from 'react-router'
-import { generateUUID, getApplication, getShortcutGroups, getShortcuts, shortcutKeyToString } from '../Util';
+import { generateUUID, getApplication, getShortcutGroups, getShortcuts, shortcutKeyToString, upsertApplication, upsertShortcutGroups, upsertShortcuts } from '../Util';
 import { IApplication, IShortcut, IShortcutGroup, IShortcutKey } from '../types';
-import { Box, Button, Chip, ChipDelete, Divider, IconButton, Input, Tab, Table, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
+import { Box, Button, Chip, ChipDelete, Divider, IconButton, Input, Tab, Table, TabList, TabPanel, Tabs, Textarea, Typography } from '@mui/joy';
 import { AddCircleOutlineOutlined, AddOutlined, ArrowLeftOutlined, CloseOutlined, DeleteOutline, DeleteOutlined, Shortcut } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
-import { randomUUID } from 'crypto';
+import { AppContext } from '../App';
+
 
 interface IShortcutEditData {
     application:{data:IApplication|undefined, setData:(target:IApplication)=>void},
@@ -17,11 +18,11 @@ const ShortcutEditPageContext = React.createContext<IShortcutEditData>({} as ISh
 export const ShortcutEditPage = () => {
     const location = useLocation(); 
     const {applicationId} = useParams(); 
+    const appContext = React.useContext(AppContext)
 
     const [appData, setAppData] = React.useState<IApplication>(); 
     const [shortcutGroups, setShortcutGroups] = React.useState<IShortcutGroup[]>([]); 
-    const [shortcuts, setShortcuts] = React.useState<IShortcut[]>([]);
-    const [selectedTab, setSelectedTab] = React.useState<number>(0); 
+    const [shortcuts, setShortcuts] = React.useState<IShortcut[]>([]);    
 
     React.useEffect(() => {
         ;(async() => {
@@ -38,35 +39,48 @@ export const ShortcutEditPage = () => {
                 setShortcuts(targetShortcuts.data); 
         })(); 
     }, [applicationId])
+
+    const handleSaveData = () => {
+        appContext.handleFireAlert("Saving Data...", 'primary')
+        
+        ;(async () => {
+            if(appData)
+                await upsertApplication(appData); 
+            await upsertShortcutGroups(shortcutGroups); 
+            await upsertShortcuts(shortcuts); 
+
+            appContext.dataLastUpdated = new Date(); 
+
+            appContext.handleFireAlert("Update successful...", 'success')
+        })(); 
+        
+    }
     
+    const handleApplicationRename = (newName:string) => {
+        const tmp = Object.assign({}, appData)
+        tmp.name = newName
+        setAppData(tmp); 
+    }
+
     return <ShortcutEditPageContext.Provider value={{
         application: {data: appData, setData: setAppData}, 
         groups: {data: shortcutGroups, setData: setShortcutGroups}, 
         shortcuts: {data: shortcuts, setData: setShortcuts}
     }}>
-        <Box display={'grid'} gridTemplateRows={'auto auto 1fr auto'} overflow={'hidden'} gap={2}>
+        <Box display={'grid'} gridTemplateRows={'auto 1fr auto'} overflow={'hidden'} gap={2}>
             
             {/* header */}
             <Box display={'grid'} gridTemplateColumns={'auto 1fr'} gap={2}>
                 <IconButton><Link to={location.pathname.substring(0,location.pathname.lastIndexOf('/'))}><ArrowLeftOutlined /></Link></IconButton>
-                <Input placeholder={appData?.name} />
-            </Box>
-
-            {/* tab banner */}
-            <Box display={'flex'} flexWrap={'wrap'} flexDirection={'row'} gap={1}>
-                <Button onClick={() => setSelectedTab(0)} color={selectedTab == 0 ? 'primary' : 'neutral'}>Key-Value Edit</Button>
-                <Button onClick={() => setSelectedTab(1)} color={selectedTab == 1 ? 'primary' : 'neutral'}>JSON Edit</Button>
-                <Divider sx={{width: "100%" }}/>
+                {appData && <Input onBlur={(ev) => handleApplicationRename(ev.currentTarget.value)} defaultValue={appData.name} />}
             </Box>
 
             {/* main content */}
-            {
-                selectedTab == 0 ? <ValueEditPanel/> : <JsonEditPanel />
-            }
+            <ValueEditPanel/>
 
             {/* Footer */}
-            <Box display={'inline-list-item'} justifyContent={'end'}>
-                <Button variant='soft'>Save</Button>
+            <Box display={'flex'} justifyContent={'end'} gap={2}>
+                <Button variant='soft' onClick={handleSaveData}>Save</Button>
                 <Button variant='soft'>Apply</Button>
                 <Button variant='soft' color='danger'>Cancel</Button>
             </Box>
@@ -95,7 +109,7 @@ const ValueEditPanel = () => {
         shortcutEditData.groups.setData(tmp)
     }
 
-    return <Box display={'grid'} gridTemplateRows={'1fr auto'} overflow={'auto'} border={'dotted'} gap={2}>
+    return <Box display={'grid'} gridTemplateRows={'1fr auto'} overflow={'auto'} gap={2}>
         <Box display={'grid'} gap={5} overflow={'auto'} height={'100%'} padding={2}>
             {groups.map(curGroup => {
                 return <ValueEditSection key={curGroup.id} shortcutGroup={curGroup} 
@@ -285,15 +299,5 @@ const ValueEditChip = ({shortcutKey, onUpdateKey, onDeleteKey}:{shortcutKey:ISho
     >
         <Typography level='body-lg'>{shortcutKeyToString(curKey)}</Typography> 
         <IconButton onClick={onDeleteKey}><CloseOutlined /></IconButton>
-    </Box>
-}
-
-
-/*
-JSON EDIT PANEL
-*/
-const JsonEditPanel = () => {
-    return <Box width={'100%'} height={'100%'} border={'double'}>
-
     </Box>
 }

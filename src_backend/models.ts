@@ -11,6 +11,7 @@ const ShortcutKey = new Schema<IShortcutKey>({
 })
 
 const ShortcutSchema = new Schema<IShortcut>({
+    id: String,
     shortcutGroupId: {type: String},
     applicationId: {type: String}, 
     name: {type: String}, 
@@ -19,10 +20,12 @@ const ShortcutSchema = new Schema<IShortcut>({
 })
 
 const ShortcutGroupSchema = new Schema<IShortcutGroup>({
+    id: String,
     name: {type: String}, 
 })
 
 const ApplicationSchema = new Schema<IApplication>({
+    id: String,
     name: {type: String}
 })
 

@@ -3,6 +3,7 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { APIResponse, getApplication } from './Util';
 import { CloseOutlined } from '@mui/icons-material';
+import { AppContext } from './App';
 
 
 export interface SidebarItem { 
@@ -17,6 +18,8 @@ export const Sidebar = () => {
     const [searchFilter, setSearchFilter] = React.useState<string|undefined>(undefined)
     const [sidebarItems, setSidebarItems] = React.useState<SidebarItem[]>([]); 
 
+    const appContext = React.useContext(AppContext)
+
     React.useEffect(()=>{
         getApplication({}).then(resp => {
             if(resp.data)
@@ -24,7 +27,7 @@ export const Sidebar = () => {
                     return {iconPath: "", label: item.name, path: `/application/${item.id}`}})
                 )
         })
-      }, [])
+      }, [appContext.dataLastUpdated])
 
     const hoverColor:string = "lightgray"; 
     const defaultColor:string = "white"; 

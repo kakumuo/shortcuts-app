@@ -144,7 +144,9 @@ app.post("/shortcut", async(req, res) => {
     if(!shortcutGroupId)
         return res.json(formatMessage(ERR_FIELD_NOT_FOUND, 'shortcutGroupId'))
 
-    const applicationObj = await ShortcutModel.updateOne({_id: id}, 
+    console.log(id)
+
+    const applicationObj = await ShortcutModel.updateOne({id: id}, 
         {
             applicationId: applicationId,
             id: id,
@@ -162,7 +164,7 @@ app.post("/shortcut", async(req, res) => {
 app.delete("/shortcut", async(req, res) => {
     const {id} = req.query
 
-    const resp = await ApplicationModel.deleteOne({_id: id});
+    const resp = await ApplicationModel.deleteOne({id: id});
     return res.json(formatMessage(0, resp.deletedCount > 0 ? "Deleted record" : `Record '${id} not found'`));
 })
 

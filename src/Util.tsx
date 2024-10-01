@@ -54,6 +54,20 @@ export const getShortcutGroups = async (params: {applicationId?:string, id?:stri
     return jsonResp;
 }
 
+export const upsertShortcutGroups = async (groups:IShortcutGroup[]) => {
+    for(let group of groups){
+        const resp = await fetch(`${BASE_URI}/shortcutGroup`, {
+            body: JSON.stringify(group), 
+            method: 'post', 
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+    
+        const jsonResp = await resp.json(); 
+    }
+}
+
 // shortcuts
 export const getShortcuts = async (params:{applicationId?:string, shortcutGroupId?:string, id?:string, searchFilter?:string}):Promise<APIResponse<IShortcut>> => {
     const resp = await fetch(`${BASE_URI}/shortcut?` + new URLSearchParams(params), {
@@ -62,6 +76,21 @@ export const getShortcuts = async (params:{applicationId?:string, shortcutGroupI
 
     const jsonResp = await resp.json(); 
     return jsonResp;
+}
+
+
+export const upsertShortcuts = async (shortcuts:IShortcut[]) => {
+    for(let shortcut of shortcuts){
+        const resp = await fetch(`${BASE_URI}/shortcut`, {
+            body: JSON.stringify(shortcut), 
+            method: 'post', 
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+    
+        const jsonResp = await resp.json(); 
+    }
 }
 
 
