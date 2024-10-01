@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'react-router'
 import { generateUUID, getApplication, getShortcutGroups, getShortcuts, shortcutKeyToString } from '../Util';
 import { IApplication, IShortcut, IShortcutGroup, IShortcutKey } from '../types';
 import { Box, Button, Chip, ChipDelete, Divider, IconButton, Input, Tab, Table, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
-import { AddCircleOutlineOutlined, AddOutlined, ArrowLeftOutlined, DeleteOutline, DeleteOutlined, Shortcut } from '@mui/icons-material';
+import { AddCircleOutlineOutlined, AddOutlined, ArrowLeftOutlined, CloseOutlined, DeleteOutline, DeleteOutlined, Shortcut } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { randomUUID } from 'crypto';
 
@@ -229,7 +229,7 @@ const ValueEditInput = ({shortcutKeys, onUpdateKeys}:{shortcutKeys:IShortcutKey[
         onUpdateKeys(tmp); 
     }
 
-    return <Box display={'flex'} width={'100%'} height={'100%'} 
+    return <Box display={'flex'} width={'100%'} height={'100%'} gap={1} 
         onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}
     >
         {shortcutKeys.map((curKey, curKeyI) => 
@@ -248,9 +248,13 @@ const ValueEditChip = ({shortcutKey, onUpdateKey, onDeleteKey}:{shortcutKey:ISho
     const [curKey, setCurKey] = React.useState(shortcutKey); 
     const ref = React.useRef<HTMLDivElement>(); 
 
-    return <Chip tabIndex={0}
+    return <Box tabIndex={0}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        display={'grid'} gridTemplateColumns={'1fr auto'} gridAutoRows={'100%'} alignItems={'center'}
+        padding={1}
+        bgcolor={isEditing ? 'lightgreen' : isHovered ? 'lightblue' : 'lightgray'} 
+        borderRadius={'10px'}
         onKeyUp={(ev) => {
             ev.stopPropagation();
             ev.preventDefault();
@@ -279,8 +283,9 @@ const ValueEditChip = ({shortcutKey, onUpdateKey, onDeleteKey}:{shortcutKey:ISho
         }}
         color={isEditing ? 'success' : isHovered ? 'primary' : 'neutral'}
     >
-        {shortcutKeyToString(curKey)} <ChipDelete onDelete={onDeleteKey} />
-    </Chip>
+        <Typography level='body-lg'>{shortcutKeyToString(curKey)}</Typography> 
+        <IconButton onClick={onDeleteKey}><CloseOutlined /></IconButton>
+    </Box>
 }
 
 
