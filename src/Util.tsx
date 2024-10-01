@@ -1,4 +1,4 @@
-import { IApplication, IShortcut, IShortcutGroup } from "./types";
+import { IApplication, IShortcut, IShortcutGroup, IShortcutKey } from "./types";
 
 const BASE_URI = "http://localhost:8001"
 
@@ -62,4 +62,32 @@ export const getShortcuts = async (params:{applicationId?:string, shortcutGroupI
 
     const jsonResp = await resp.json(); 
     return jsonResp;
+}
+
+
+
+
+/*
+General
+*/
+
+export const shortcutKeyToString = (record:IShortcutKey):string => {
+    let keyList:string[] = []
+    if(record.winMod) keyList.push("Win")
+    if(record.ctrlMod) keyList.push("Ctrl")
+    if(record.altMod) keyList.push("Alt")
+    if(record.shiftMod) keyList.push("Shift")
+    keyList = [...keyList, ...record.keys]
+    return keyList.join(" + ")
+}
+
+export const generateUUID = () => {
+    const timestamp = new Date().getTime();
+    const hexTimestamp = timestamp.toString(16);
+    
+    const randomPart = Math.random().toString(16).substr(2, 8);
+    
+    const uuid = (hexTimestamp + randomPart).substr(0, 16).padEnd(16, '0');
+    
+    return uuid;
 }

@@ -1,13 +1,17 @@
 import React from 'react'
-import { useParams } from 'react-router'
+import { useLocation, useParams } from 'react-router'
 import { IApplication, IShortcut, IShortcutGroup } from '../types';
 import { Box, Dropdown, IconButton, Input, Menu, MenuButton, MenuItem, Option, Select, Skeleton, Typography, TypographyClasses, TypographyClassKey, TypographyProps, TypographySystem, TypographyTypeMap } from '@mui/joy';
 import { getApplication, getShortcutGroups, getShortcuts } from '../Util';
 import { CloseOutlined, MoreHorizOutlined } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 
 
 export const ShortcutPage = () => {
     const {applicationId} = useParams();
+    const location = useLocation();
+
+    console.log(location)
     const [appData, setAppData] = React.useState<IApplication>(); 
     const [shortcutGroups, setShortcutGroups] = React.useState<IShortcutGroup[]>(); 
     const [shortcuts, setShortcuts] = React.useState<IShortcut[]>(); 
@@ -94,8 +98,7 @@ const MoreOptionsButton = (props:{shortcut:IShortcut|undefined}) => {
     return (<Dropdown>
         <MenuButton slots={{root: IconButton}}><MoreHorizOutlined /></MenuButton>
         <Menu>
-            <MenuItem>Rename</MenuItem>
-            <MenuItem>Edit</MenuItem>
+            <MenuItem><Link to="./edit">Edit</Link></MenuItem>
             <MenuItem>Export to Json</MenuItem>
             <MenuItem color='danger'>Delete</MenuItem>
         </Menu>

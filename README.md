@@ -24,8 +24,8 @@
 - ~~Add more shortcut, shortcutGroups and applications into the DB~~
 - ~~Allow for keyboard sequences and alternate shortcut inputs~~
 - Allow for shortcuts to be added and removed through the UI 
-    - Allow for edit through JSON
-    - Allow for edit through UI
+    - JSON Edit
+    - Key-Value Edit
 - Create favorites section in sidebar
 - Allow for main page color scheme to be changed from select color schemes
 - Allow for main page themes to be changed from select themes

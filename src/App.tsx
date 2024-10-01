@@ -5,11 +5,12 @@ import { Sidebar, SidebarItem } from './Components';
 
 import { HomePage } from './Pages/Home';
 import { ShortcutPage } from './Pages/ShortcutPage';
+import { ShortcutEditPage } from './Pages/ShortcutEditPage';
 
 function App() {
   const [sidebarItems, setSidebarItems] = React.useState<SidebarItem[]>([])
 
-  return <Box className='App' display={'grid'} gridTemplateColumns={'10% auto'} width={'100vw'} height={'100vh'} border={'solid'} padding={3} gap={2}
+  return <Box className='App' display={'grid'} gridTemplateColumns={'10% auto'} gridTemplateRows={'100%'} width={'100vw'} height={'100vh'} maxHeight={'100vh'} border={'solid'} padding={3} gap={2}
     bgcolor={'lightgray'}
   >
     <BrowserRouter>
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path='/' element={<HomePage />} />
           <Route path='/application/:applicationId' element={<ShortcutPage />} />
+          <Route path='/application/:applicationId/edit' element={<ShortcutEditPage />} />
         </Routes>
       </Box>
     </BrowserRouter>
