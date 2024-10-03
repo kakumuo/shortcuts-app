@@ -1,32 +1,30 @@
 import {Schema, model} from "mongoose";
-import {IApplication, IShortcut, IShortcutGroup, ISession, IShortcutKey} from '../src/types'
+import {IApplication, ISession} from '../src/types'
 
 // APP DATA
-const ShortcutKey = new Schema<IShortcutKey>({
-    keys: [String], 
-    ctrlMod: Boolean, 
-    altMod: Boolean, 
-    shiftMod: Boolean, 
-    winMod: Boolean
-})
-
-const ShortcutSchema = new Schema<IShortcut>({
-    id: String,
-    shortcutGroupId: {type: String},
-    applicationId: {type: String}, 
-    name: {type: String}, 
-    keySequence: [ShortcutKey], 
-    altSequence: [ShortcutKey],
-})
-
-const ShortcutGroupSchema = new Schema<IShortcutGroup>({
-    id: String,
-    name: {type: String}, 
-})
-
 const ApplicationSchema = new Schema<IApplication>({
-    id: String,
-    name: {type: String}
+    name:String, 
+    fav: {type: Boolean, default: false},
+    groups: [{
+        name: String, 
+        shortcuts:[{
+            name:String, 
+            keySequence:[{
+                keys:[String], 
+                ctrlMod: Boolean, 
+                shiftMod: Boolean, 
+                altMod: Boolean,
+                winMod:Boolean
+            }], 
+            altSequence:[{
+                keys:[String], 
+                ctrlMod: Boolean, 
+                shiftMod: Boolean, 
+                altMod: Boolean,
+                winMod:Boolean
+            }], 
+        }]
+    }]
 })
 
 // SESSION
@@ -37,10 +35,7 @@ const SessionSchema = new Schema<ISession>({
     lastLogin: {type: Date},
 })
 
-
 const ApplicationModel = model('Application', ApplicationSchema)
-const ShortcutGroupModel = model('ShortcutGroup', ShortcutGroupSchema)
-const ShortcutModel = model('Shortcut', ShortcutSchema)
 const SessionModel = model('Session', SessionSchema)
 
-export {ApplicationModel, ShortcutGroupModel, ShortcutModel, SessionModel}
+export {ApplicationModel, SessionModel}

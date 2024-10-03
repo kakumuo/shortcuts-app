@@ -1,18 +1,25 @@
+
+export interface ISession {
+    id:string, 
+    theme: string, 
+    osType: 'windows'|'mac', 
+    initialLogin: Date, 
+    lastLogin: Date,
+}
+
 export interface IApplication {
-    id:string,
-    name:string
+    _id:string, 
+    name:string, 
+    fav:boolean,
+    groups: IShortcutGroup[]
 }
 
 export interface IShortcutGroup{
-    id:string,
-    applicationId:string,
     name:string, 
+    shortcuts: IShortcut[]
 }
 
 export interface IShortcut {
-    id:string,
-    applicationId:string,
-    shortcutGroupId:string,
     name:string, 
     keySequence: IShortcutKey[]
     altSequence: IShortcutKey[] //alternate sequence
@@ -26,13 +33,7 @@ export interface IShortcutKey {
     winMod:boolean
 }
 
-export interface ISession {
-    id:string, 
-    theme: string, 
-    osType: 'windows'|'mac', 
-    initialLogin: Date, 
-    lastLogin: Date,
-}
+
 
 
 /*

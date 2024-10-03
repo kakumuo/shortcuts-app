@@ -1,42 +1,34 @@
 import React from 'react'
 import { useLocation, useParams } from 'react-router'
-import { generateUUID, getApplication, getShortcutGroups, getShortcuts, shortcutKeyToString, upsertApplication, upsertShortcutGroups, upsertShortcuts } from '../Util';
-import { IApplication, IShortcut, IShortcutGroup, IShortcutKey } from '../types';
-import { Box, Button, Chip, ChipDelete, Divider, IconButton, Input, Tab, Table, TabList, TabPanel, Tabs, Textarea, Typography } from '@mui/joy';
-import { AddCircleOutlineOutlined, AddOutlined, ArrowLeftOutlined, CloseOutlined, DeleteOutline, DeleteOutlined, Shortcut } from '@mui/icons-material';
+import { getApplication, shortcutKeyToString, upsertApplication } from '../Util';
+import { IApplication, IShortcut, IShortcutKey } from '../types';
+import { Box, Button, Chip, ChipDelete, Divider, IconButton, Input, Table } from '@mui/joy';
+import { AddCircleOutlineOutlined, AddOutlined, ArrowLeftOutlined, DeleteOutline, DeleteOutlined } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { AppContext } from '../App';
 
 
 interface IShortcutEditData {
-    application:{data:IApplication|undefined, setData:(target:IApplication)=>void},
-    groups:{data:IShortcutGroup[], setData:(target:IShortcutGroup[])=>void},
-    shortcuts:{data:IShortcut[], setData:(target:IShortcut[])=>void},
+    appData:IApplication|undefined, 
+    setAppData:(target:IApplication)=>void
 }
+
 const ShortcutEditPageContext = React.createContext<IShortcutEditData>({} as IShortcutEditData)
 
 export const ShortcutEditPage = () => {
     const location = useLocation(); 
     const {applicationId} = useParams(); 
     const appContext = React.useContext(AppContext)
+    const prevPath = location.pathname.substring(0,location.pathname.lastIndexOf('/'))
 
     const [appData, setAppData] = React.useState<IApplication>(); 
-    const [shortcutGroups, setShortcutGroups] = React.useState<IShortcutGroup[]>([]); 
-    const [shortcuts, setShortcuts] = React.useState<IShortcut[]>([]);    
 
     React.useEffect(() => {
         ;(async() => {
             const targetApp = await getApplication({id: applicationId})
+            console.log(targetApp.data)
             if(targetApp.data)
                 setAppData(targetApp.data[0])
-    
-            const targetShortcutGroups = await getShortcutGroups({applicationId: applicationId})
-            if(targetShortcutGroups.data)
-                setShortcutGroups(targetShortcutGroups.data)
-    
-            const targetShortcuts = await getShortcuts({applicationId: applicationId})
-            if(targetShortcuts.data)
-                setShortcuts(targetShortcuts.data); 
         })(); 
     }, [applicationId])
 
@@ -44,16 +36,11 @@ export const ShortcutEditPage = () => {
         appContext.handleFireAlert("Saving Data...", 'primary')
         
         ;(async () => {
-            if(appData)
-                await upsertApplication(appData); 
-            await upsertShortcutGroups(shortcutGroups); 
-            await upsertShortcuts(shortcuts); 
-
-            appContext.dataLastUpdated = new Date(); 
+            if(appData) await upsertApplication(appData); 
+            appContext.setLastUpdated(new Date())
 
             appContext.handleFireAlert("Update successful...", 'success')
         })(); 
-        
     }
     
     const handleApplicationRename = (newName:string) => {
@@ -62,16 +49,12 @@ export const ShortcutEditPage = () => {
         setAppData(tmp); 
     }
 
-    return <ShortcutEditPageContext.Provider value={{
-        application: {data: appData, setData: setAppData}, 
-        groups: {data: shortcutGroups, setData: setShortcutGroups}, 
-        shortcuts: {data: shortcuts, setData: setShortcuts}
-    }}>
+    return <ShortcutEditPageContext.Provider value={{appData, setAppData}}>
         <Box display={'grid'} gridTemplateRows={'auto 1fr auto'} overflow={'hidden'} gap={2}>
             
             {/* header */}
             <Box display={'grid'} gridTemplateColumns={'auto 1fr'} gap={2}>
-                <IconButton><Link to={location.pathname.substring(0,location.pathname.lastIndexOf('/'))}><ArrowLeftOutlined /></Link></IconButton>
+                <IconButton><Link to={prevPath}><ArrowLeftOutlined /></Link></IconButton>
                 {appData && <Input onBlur={(ev) => handleApplicationRename(ev.currentTarget.value)} defaultValue={appData.name} />}
             </Box>
 
@@ -81,8 +64,13 @@ export const ShortcutEditPage = () => {
             {/* Footer */}
             <Box display={'flex'} justifyContent={'end'} gap={2}>
                 <Button variant='soft' onClick={handleSaveData}>Save</Button>
-                <Button variant='soft'>Apply</Button>
-                <Button variant='soft' color='danger'>Cancel</Button>
+                <Button variant='soft' onClick={() => {
+                    handleSaveData()
+                    setTimeout(() => {
+                        document.location.href = prevPath
+                    }, .5 * 1000)
+                }}>Apply</Button>
+                <Button variant='soft' color='danger'><Link style={{textDecorationLine: 'none'}} to={prevPath}>Cancel</Link></Button>
             </Box>
         </Box>
     </ShortcutEditPageContext.Provider>
@@ -94,99 +82,79 @@ VALUE EDIT PANEL
 */
 const ValueEditPanel = () => {
     const shortcutEditData:IShortcutEditData = React.useContext(ShortcutEditPageContext)
-    const groups = shortcutEditData.groups.data
-    const shortcuts = shortcutEditData.shortcuts.data
+    const groups = shortcutEditData.appData?.groups
 
     const handleGroupAdd = () => {
-        if(!shortcutEditData.application.data) return;
-
-        const tmp = [...groups, {
-            applicationId: shortcutEditData.application.data.id, 
-            id: generateUUID(), 
-            name: ""
-        } as IShortcutGroup]
-
-        shortcutEditData.groups.setData(tmp)
+        if(!shortcutEditData.appData) return;
+        const tmpData = Object.assign({}, shortcutEditData.appData)
+        
+        tmpData.groups.push({name: '', shortcuts: []})
+        shortcutEditData.setAppData(tmpData)
     }
 
     return <Box display={'grid'} gridTemplateRows={'1fr auto'} overflow={'auto'} gap={2}>
-        <Box display={'grid'} gap={5} overflow={'auto'} height={'100%'} padding={2}>
-            {groups.map(curGroup => {
-                return <ValueEditSection key={curGroup.id} shortcutGroup={curGroup} 
-                    shortcuts={shortcuts.filter(curShortcut => curShortcut.shortcutGroupId == curGroup.id)} />
+        <Box display={'flex'} flexDirection={'column'} gap={4} overflow={'auto'} padding={2}>
+            {groups && groups.map((curGroup, curGroupI) => {
+                return <GroupEditSection key={curGroup.name + curGroupI} shortcutGroupI={curGroupI} shortcuts={curGroup.shortcuts} />
             })}
         </Box>
         <Button startDecorator={<AddCircleOutlineOutlined />} onClick={handleGroupAdd}>Add Group</Button>
     </Box>
 }
 
-const ValueEditSection = ({shortcutGroup, shortcuts}:{shortcutGroup:IShortcutGroup, shortcuts:IShortcut[]}) => {
+const GroupEditSection = ({shortcutGroupI, shortcuts}:{shortcutGroupI:number, shortcuts:IShortcut[]}) => {
     const shortcutEditData:IShortcutEditData = React.useContext(ShortcutEditPageContext)
     const [hoveredRowI, setHoveredRowI] = React.useState(-1)
+    const [group, setGroup] = React.useState(shortcutEditData.appData?.groups[shortcutGroupI])
 
-    const handleKeyUpdate = (shortcutId:string, updatedSequence:IShortcutKey[], isAlternate:boolean) => {
-        const data = [...shortcutEditData.shortcuts.data]
-        const targetIndex = data.findIndex(shortcut => shortcut.id == shortcutId && shortcut.shortcutGroupId == shortcutGroup.id)
-        if(targetIndex != -1)
-            if(isAlternate) data[targetIndex].altSequence = updatedSequence
-            else data[targetIndex].keySequence = updatedSequence
-        shortcutEditData.shortcuts.setData(data)
-
-        console.log(updatedSequence.map(item => shortcutKeyToString(item)).join(" => "))
-    }
-
-    const handleDeleteShortcut = (shortcutId:string) => {
-        const data = [...shortcutEditData.shortcuts.data]
-        shortcutEditData.shortcuts.setData(data.filter(shortcut => shortcutId != shortcut.id))
+    const handleDeleteShortcut = (shortcutI:number) => {
+        const tmpData = Object.assign({}, shortcutEditData.appData)
+        tmpData.groups[shortcutGroupI].shortcuts = tmpData.groups[shortcutGroupI].shortcuts.filter((_, i) => i != shortcutI)
+        shortcutEditData.setAppData(tmpData)
     }
 
     const handleAddShortcut = () => {
-        if(!shortcutEditData.application.data) return
+        if(!shortcutEditData.appData) return
 
-        const data = [...shortcutEditData.shortcuts.data]
-        data.push({
-            id: generateUUID(), 
-            shortcutGroupId: shortcutGroup.id, 
-            applicationId: shortcutEditData.application.data.id, 
+        const tmpData = Object.assign({}, shortcutEditData.appData)
+        tmpData.groups[shortcutGroupI].shortcuts.push({
             altSequence: [], 
             keySequence: [],
             name: ""
         } as IShortcut)
 
-        shortcutEditData.shortcuts.setData(data)
+        shortcutEditData.setAppData(tmpData)
     }
 
-    const handleShortcutRename = (shortcutId:string, shortcutName:string) => {
-        if(shortcutName.trim() == "") return;
+    const handleShortcutRename = (shortcutI:number, newName:string) => {
+        if(newName.trim() == "") return;
 
-        const data = [...shortcutEditData.shortcuts.data]
-        const targetIndex = data.findIndex(shortcut => shortcut.id == shortcutId && shortcut.shortcutGroupId == shortcutGroup.id)
-        if(targetIndex != -1 && data[targetIndex].name !== shortcutName ){
-            data[targetIndex].name = shortcutName
-            shortcutEditData.shortcuts.setData(data)
+        const tmpData = Object.assign({}, shortcutEditData.appData)
+        
+        if(tmpData.groups[shortcutGroupI].shortcuts[shortcutI].name !== newName ){
+            tmpData.groups[shortcutGroupI].shortcuts[shortcutI].name = newName
+            shortcutEditData.setAppData(tmpData)
         }
     }
 
     const handleGroupDelete = () => {
-        const groupData = [...shortcutEditData.groups.data.filter(group => group.id != shortcutGroup.id)]
-        const shortcutData = [...shortcutEditData.shortcuts.data.filter(shortcut => shortcut.shortcutGroupId != shortcutGroup.id)]
-        shortcutEditData.groups.setData(groupData)
-        shortcutEditData.shortcuts.setData(shortcutData)
+        const tmpData = Object.assign({}, shortcutEditData.appData)
+
+        tmpData.groups = tmpData.groups.filter((_, i) => i != shortcutGroupI)
+        shortcutEditData.setAppData(tmpData)
     }
 
     const handleGroupRename = (newName:string) => {
-        const groupData = [...shortcutEditData.groups.data]; 
-        const targetIndex = groupData.findIndex(group => group.id == shortcutGroup.id)
-        if(targetIndex != -1)
-            groupData[targetIndex].name = newName;
-    
-        shortcutEditData.groups.setData(groupData)
+        const tmpData = Object.assign({}, shortcutEditData.appData)
+
+        tmpData.groups[shortcutGroupI].name = newName
+        shortcutEditData.setAppData(tmpData)
     }
 
     return <Box>
         <Divider sx={{gap:2, height: '1px', alignSelf :'center', '--Divider-childPosition': '5%', marginTop: 2, marginBottom: 2}}>
             <IconButton onClick={handleGroupDelete} color='danger'><DeleteOutlined/></IconButton>
-            <Input onBlur={(ev) => handleGroupRename(ev.currentTarget.value)} defaultValue={shortcutGroup.name} fullWidth />
+            <Input onBlur={(ev) => handleGroupRename(ev.currentTarget.value)} defaultValue={group?.name} fullWidth />
             <IconButton onClick={() => handleAddShortcut()} ><AddOutlined /></IconButton>
         </Divider>
         
@@ -198,49 +166,63 @@ const ValueEditSection = ({shortcutGroup, shortcuts}:{shortcutGroup:IShortcutGro
                     <th style={{fontWeight: 'inherit'}}>Alternate Key Binding</th>
                 </tr>
             </thead>
-            {shortcuts.map((shortcut, shortcutI) => {
-                return <tr key={shortcut.id}
-                    onMouseEnter={() => setHoveredRowI(shortcutI)}
-                    onMouseLeave={() => setHoveredRowI(-1)}
-                >
-                    <td style={{display: 'flex'}}>
-                        {hoveredRowI == shortcutI && <IconButton onClick={() => handleDeleteShortcut(shortcut.id)} color='danger'><DeleteOutline /></IconButton> }
-                        <Input 
-                            onBlur={(ev) => handleShortcutRename(shortcut.id, ev.currentTarget.value)} 
-                            sx={{flex: '1 1 auto'}} defaultValue={shortcut.name}
-                        />
-                    </td>
-                    <td><ValueEditInput shortcutKeys={shortcut.keySequence} onUpdateKeys={(updated) => handleKeyUpdate(shortcut.id, updated, false)} /></td>
-                    <td><ValueEditInput shortcutKeys={shortcut.altSequence} onUpdateKeys={(updated) => handleKeyUpdate(shortcut.id, updated, true)}/></td>
-                </tr>
-            })}
+            <tbody>
+                {shortcuts.map((shortcut, shortcutI) => {
+                    return <tr key={shortcut.name + shortcutI}
+                        onMouseEnter={() => setHoveredRowI(shortcutI)}
+                        onMouseLeave={() => setHoveredRowI(-1)}
+                    >
+                        <td style={{display: 'flex'}}>
+                            {hoveredRowI == shortcutI && <IconButton onClick={() => handleDeleteShortcut(shortcutI)} color='danger'><DeleteOutline /></IconButton> }
+                            <Input 
+                                onBlur={(ev) => handleShortcutRename(shortcutI, ev.currentTarget.value)} 
+                                sx={{flex: '1 1 auto'}} defaultValue={shortcut.name}
+                            />
+                        </td>
+                        <td><ShortcutEditInput shortcutKeys={shortcut.keySequence} groupI={shortcutGroupI} shortcutI={shortcutI} /></td>
+                        <td><ShortcutEditInput shortcutKeys={shortcut.altSequence} groupI={shortcutGroupI} shortcutI={shortcutI} isAltSequence={true}/></td>
+                    </tr>
+                })}
+            </tbody>
         </Table>
     </Box>
 }
 
-const ValueEditInput = ({shortcutKeys, onUpdateKeys}:{shortcutKeys:IShortcutKey[], onUpdateKeys:(shortcutKeys:IShortcutKey[])=>void}) => {
+const ShortcutEditInput = ({shortcutKeys, groupI, shortcutI, isAltSequence=false}:{shortcutKeys:IShortcutKey[], groupI:number, shortcutI:number, isAltSequence?:boolean}) => {
+    const shortcutEditData:IShortcutEditData = React.useContext(ShortcutEditPageContext)
     const [isHovered, setIsHovered] = React.useState(false)
 
     const handleUpdateKey = (updateIndex:number, updatedKey:IShortcutKey) => {
-        const tmp = [...shortcutKeys]
-        tmp[updateIndex] = updatedKey; 
-        onUpdateKeys(tmp); 
+        console.log(updatedKey)
+        
+        const tmpData = Object.assign({}, shortcutEditData.appData); 
+        tmpData.groups[groupI].shortcuts[shortcutI][isAltSequence ? 'altSequence' : 'keySequence'][updateIndex] = updatedKey
+        shortcutEditData.setAppData(tmpData)
     }
 
     const handleAddNewKey = () => {
-        const addedKey = {
+        const tmpData = Object.assign({}, shortcutEditData.appData); 
+        tmpData.groups[groupI].shortcuts[shortcutI][isAltSequence ? 'altSequence' : 'keySequence'].push({
             altMod: false, 
             ctrlMod: false, 
             keys: [], 
             shiftMod: false, 
             winMod: false
-        } as IShortcutKey
-        onUpdateKeys([...shortcutKeys, addedKey]); 
+        })
+        shortcutEditData.setAppData(tmpData)
     }
 
     const handleDeleteKey = (deleteIndex:number) => {
-        const tmp = shortcutKeys.filter((_, i) => i!= deleteIndex); 
-        onUpdateKeys(tmp); 
+        const tmpData = Object.assign({}, shortcutEditData.appData); 
+        let targetSequence = []
+        if(isAltSequence)
+            targetSequence = tmpData.groups[groupI].shortcuts[shortcutI].altSequence
+        else
+            targetSequence = tmpData.groups[groupI].shortcuts[shortcutI].keySequence
+
+        targetSequence = targetSequence.filter((_, i) => i != deleteIndex)
+        tmpData.groups[groupI].shortcuts[shortcutI][isAltSequence ? 'altSequence' : 'keySequence'] = targetSequence
+        shortcutEditData.setAppData(tmpData)
     }
 
     return <Box display={'flex'} width={'100%'} height={'100%'} gap={1} 
@@ -262,13 +244,10 @@ const ValueEditChip = ({shortcutKey, onUpdateKey, onDeleteKey}:{shortcutKey:ISho
     const [curKey, setCurKey] = React.useState(shortcutKey); 
     const ref = React.useRef<HTMLDivElement>(); 
 
-    return <Box tabIndex={0}
+    return <Chip tabIndex={0}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        display={'grid'} gridTemplateColumns={'1fr auto'} gridAutoRows={'100%'} alignItems={'center'}
-        padding={1}
-        bgcolor={isEditing ? 'lightgreen' : isHovered ? 'lightblue' : 'lightgray'} 
-        borderRadius={'10px'}
+        sx={{fontSize: 'larger', minWidth: "100px", textAlign: 'end'}}
         onKeyUp={(ev) => {
             ev.stopPropagation();
             ev.preventDefault();
@@ -293,11 +272,11 @@ const ValueEditChip = ({shortcutKey, onUpdateKey, onDeleteKey}:{shortcutKey:ISho
             if(curKey.altMod == curKey.ctrlMod == curKey.shiftMod == curKey.winMod == false && curKey.keys.length == 0)
                 onDeleteKey()
             else 
-                onUpdateKey(shortcutKey)
+                onUpdateKey(curKey)
         }}
         color={isEditing ? 'success' : isHovered ? 'primary' : 'neutral'}
     >
-        <Typography level='body-lg'>{shortcutKeyToString(curKey)}</Typography> 
-        <IconButton onClick={onDeleteKey}><CloseOutlined /></IconButton>
-    </Box>
+        {shortcutKeyToString(curKey)}
+        <ChipDelete onDelete={onDeleteKey} />
+    </Chip>
 }

@@ -1,21 +1,36 @@
 import React from 'react'
 import { useLocation, useParams } from 'react-router'
-import { IApplication, IShortcut, IShortcutGroup } from '../types';
-import { Box, Dropdown, IconButton, Input, Menu, MenuButton, MenuItem, Option, Select, Skeleton, Typography, TypographyClasses, TypographyClassKey, TypographyProps, TypographySystem, TypographyTypeMap } from '@mui/joy';
-import { getApplication, getShortcutGroups, getShortcuts } from '../Util';
-import { CloseOutlined, MoreHorizOutlined } from '@mui/icons-material';
+import { IApplication, IShortcut, IShortcutGroup, IShortcutKey } from '../types';
+import { Box, Chip, Dropdown, IconButton, Input, Menu, MenuButton, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { deleteApplication, getApplication, getColor, shortcutKeyToString, upsertApplication } from '../Util';
+import { ArrowRight, CloseOutlined, FavoriteOutlined, MoreHorizOutlined, StarBorderOutlined, StarOutline, StarOutlined, StarsOutlined } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
+import { AppContext } from '../App';
 
 
+const highlightColors = [
+    "lightblue",
+    "lightcoral",
+    "lightgreen",
+    "lightgrey",
+    "lightpink",
+    "lightsalmon",
+    "lightseagreen",
+    "lightskyblue",
+    "lightslategray",
+    "lightslategrey",
+    "lightsteelblue",
+    "lightyellow"
+];
+  
 export const ShortcutPage = () => {
     const {applicationId} = useParams();
-    const location = useLocation();
+    const appContext = React.useContext(AppContext); 
 
-    console.log(location)
     const [appData, setAppData] = React.useState<IApplication>(); 
-    const [shortcutGroups, setShortcutGroups] = React.useState<IShortcutGroup[]>(); 
-    const [shortcuts, setShortcuts] = React.useState<IShortcut[]>(); 
-    const [targetShortcut, setTargetShortcut] = React.useState<IShortcut>(); 
+    const [targetAppData, setTargetAppData] = React.useState<IApplication>(); 
+    const [targetShortcut, setTargetShortcut] = React.useState<IShortcutKey>(); 
+    const [targetHighlight, setTargetHighlight] = React.useState("white")
     const [targetLayout, setTargetLayout] = React.useState<EKeyboardLayout>(EKeyboardLayout.QUERTY); 
     const [targetPlatform, setTargetPlatform] = React.useState<EKeyboardPlatform>(EKeyboardPlatform.WINDOWS); 
     const [searchFilter, setSearchFilter] = React.useState<string|undefined>(undefined); 
@@ -23,33 +38,84 @@ export const ShortcutPage = () => {
     React.useEffect(() => {
         ;(async() => {
             const targetApp = await getApplication({id: applicationId})
-            if(targetApp.data)
+            if(targetApp.data) {
                 setAppData(targetApp.data[0])
-
-            const targetShortcutGroups = await getShortcutGroups({applicationId: applicationId})
-            if(targetShortcutGroups.data)
-                setShortcutGroups(targetShortcutGroups.data)
-
-            const targetShortcuts = await getShortcuts({applicationId: applicationId})
-            if(targetShortcuts.data)
-                setShortcuts(targetShortcuts.data); 
+                setTargetAppData(targetApp.data[0])
+            }
         })(); 
     }, [applicationId])
 
-    const handleSearch = async (searchFilter:string|undefined) => {
+    const handleDelete = () => {
+        if(applicationId)
+            deleteApplication(applicationId).then(() => {
+                document.location.href = 'http://localhost:3000'
+            })
+    }
+
+    const handleFav = (isFav:boolean) => {
+        let tmpData = Object.assign({}, targetAppData); 
+        tmpData.fav = isFav; 
+        setTargetAppData(tmpData); 
+        
+        tmpData = Object.assign({}, appData); 
+        tmpData.fav = isFav; 
+        setAppData(tmpData); 
+
+        upsertApplication(tmpData); 
+        appContext.setLastUpdated(new Date()); 
+    }
+
+    const handleExportData = () => {
+        if(appData){
+            const file = new File([JSON.stringify(appData, null, "\t")], `${appData.name}.json`,{
+                type: 'applicaiton/json'
+            })
+
+            document.location.href = window.URL.createObjectURL(file)
+        }
+    }
+
+    const handleSearch = (searchFilter:string|undefined) => {
+        if(searchFilter == undefined){
+            console.log(appData)
+            setTargetAppData(appData)
+        } else{
+            const tmpData = JSON.parse(JSON.stringify(appData)); 
+            const tmpGroups:IShortcutGroup[] = []
+            for(let i = 0; i < tmpData.groups.length; i++){
+                let group = tmpData.groups[i]
+                if(group.name.includes(searchFilter)){
+                    tmpGroups.push(group); continue; 
+                }
+    
+                const tmpShortcuts:IShortcut[] = []
+                for(let sc of group.shortcuts){
+                    if(sc.name.includes(searchFilter)) tmpShortcuts.push(sc)
+                }
+                if(tmpShortcuts.length > 0){
+                    group.shortcuts = tmpShortcuts
+                    tmpGroups.push(group)
+                }
+            }
+            tmpData.groups = tmpGroups; 
+            setTargetAppData(tmpData)
+        }
         setSearchFilter(searchFilter)
-
-        let targetShortcuts; 
-
-        targetShortcuts = await getShortcuts({applicationId: applicationId, searchFilter: searchFilter})
-        if(targetShortcuts.data)
-            setShortcuts(targetShortcuts.data); 
     }
     
+
     return <Box display={'flex'} flexDirection={'column'} width={'100%'} height={'100%'} gap={2}>
-        <Box display={'grid'} gridTemplateColumns={'1fr auto'} role='header'> 
+        <Box display={'grid'} gridTemplateColumns={'auto 1fr auto'} role='header'> 
+            <IconButton onClick={() => handleFav(!targetAppData?.fav)}>{targetAppData?.fav ? <StarOutlined /> : <StarBorderOutlined />}</IconButton>
             <Typography level='h2'>{appData?.name}</Typography>
-            <MoreOptionsButton shortcut={targetShortcut} />
+            <Dropdown>
+                <MenuButton slots={{root: IconButton}}><MoreHorizOutlined /></MenuButton>
+                <Menu>
+                    <MenuItem><Link to="./edit">Edit</Link></MenuItem>
+                    <MenuItem onClick={handleExportData}>Export to Json</MenuItem>
+                    <MenuItem color='danger' onClick={handleDelete}>Delete</MenuItem>
+                </Menu>
+            </Dropdown>
         </Box>
 
         <Box position={'relative'} display={'flex'} height={'100%'} border={'dotted gray'}>
@@ -60,7 +126,8 @@ export const ShortcutPage = () => {
                 {Object.keys(EKeyboardLayout).map((layout, layoutI) => <Option key={layoutI} value={layout}>{layout}</Option>)}
             </Select>
 
-            <DisplayKeyboard targetPlatform={targetPlatform} targetLayout={targetLayout} highlightedShortcut={targetShortcut}/>
+            <DisplayKeyboard targetPlatform={targetPlatform} targetLayout={targetLayout} shortcutKey={targetShortcut} highlightColor = {targetHighlight}
+            />
         </Box>
 
         <Input placeholder='Search...' onKeyDown={(ev) => {
@@ -76,33 +143,18 @@ export const ShortcutPage = () => {
         </Box>}
     
         <Box maxWidth={'100%'} height={'100%'} display={'flex'} flexDirection={'row'} flexWrap={'wrap'} sx={{overflowY: 'scroll'}} alignContent={'stretch'} gap={2}>
-            {shortcutGroups?.filter((group) => shortcuts?.findIndex(shortcut => shortcut.shortcutGroupId == group.id) != -1)
-                .map((sGroup, sGroupI) => 
-                <ShortcutGroupList shortcutGroup={sGroup} style={{border: 'solid', borderRadius: '10px', flex: '1 1 auto', padding: 10}}>
-                    {shortcuts?.filter((sCut, sCutI) => sCut.shortcutGroupId == sGroup.id)
-                        .map((sCut, sCutI) => <ShortcutItem key={sCutI} shortcut={sCut} setSelectedShortcut={(sc) => setTargetShortcut(sc) }/>)
+            {targetAppData && targetAppData.groups.map((sGroup, sGroupI) => 
+                <ShortcutGroupList key={sGroupI} shortcutGroup={sGroup} style={{border: 'solid', borderRadius: '10px', flex: '1 1 auto', padding: 10}}>
+                    {sGroup.shortcuts.map((sCut, sCutI) => <ShortcutItem key={`${sGroupI}-${sCutI}`} shortcut={sCut} 
+                    setSelectedShortcut={(sc, highlightI) => {
+                        setTargetShortcut(sc)
+                        setTargetHighlight(highlightColors[highlightI])
+                    }}/>)
                     }
                 </ShortcutGroupList>
             )}
         </Box>
     </Box>
-}
-
-
-/*
-MORE OPTIONS BUTTON
-*/
-
-const MoreOptionsButton = (props:{shortcut:IShortcut|undefined}) => {
-
-    return (<Dropdown>
-        <MenuButton slots={{root: IconButton}}><MoreHorizOutlined /></MenuButton>
-        <Menu>
-            <MenuItem><Link to="./edit">Edit</Link></MenuItem>
-            <MenuItem>Export to Json</MenuItem>
-            <MenuItem color='danger'>Delete</MenuItem>
-        </Menu>
-    </Dropdown>)
 }
 
 const functionRow = [
@@ -160,8 +212,8 @@ enum EKeyboardPlatform {
     WINDOWS = 'WINDOWS',
 }
 const DisplayKeyboard = (
-        {targetPlatform=EKeyboardPlatform.WINDOWS, targetLayout=EKeyboardLayout.QUERTY, highlightedShortcut=undefined}
-        :{targetPlatform:EKeyboardPlatform, targetLayout:EKeyboardLayout, highlightedShortcut:IShortcut|undefined}
+        {targetPlatform=EKeyboardPlatform.WINDOWS, targetLayout=EKeyboardLayout.QUERTY, shortcutKey=undefined, highlightColor}
+        :{targetPlatform:EKeyboardPlatform, targetLayout:EKeyboardLayout, shortcutKey:IShortcutKey|undefined, highlightColor:string}
     ) => {
 
     return (
@@ -170,6 +222,7 @@ const DisplayKeyboard = (
                 [functionRow, ...layoutMap[targetLayout]].map((layoutRow, layoutRowI) => {
                     return <Box key={layoutRowI} display={'flex'}>{layoutRow.map((targetKey, targetKeyI) => {
                         let targetFlex = '1 1 auto'
+                        let doHighlight = false; 
                         
                         if(targetKey == 'Backspace')        targetFlex = '1.25 1 auto'
                         else if (targetKey == '\\')         targetFlex = '1.25 1 auto'
@@ -180,23 +233,19 @@ const DisplayKeyboard = (
                         else if (targetKey == 'Shift')      targetFlex = '2 1 auto'
                         else if (targetKey == 'Space')      targetFlex = '7 1 auto'
                         
-                        let highlightColor = 'white'
-                        if(highlightedShortcut) {
-                            for(let shortcutKey of highlightedShortcut.keySequence){
-                                if(
-                                    (shortcutKey.altMod && targetKey == 'Alt')
-                                    || (shortcutKey.ctrlMod && targetKey == 'Ctrl')
-                                    || (shortcutKey.shiftMod && targetKey == 'Shift')
-                                    || (shortcutKey.keys.includes(targetKey.toUpperCase()))
-                                ) {
-                                    highlightColor = 'lightblue'; 
-                                    break;
-                                }
+                        if(shortcutKey) {
+                            if(
+                                (shortcutKey.altMod && targetKey == 'Alt')
+                                || (shortcutKey.ctrlMod && targetKey == 'Ctrl')
+                                || (shortcutKey.shiftMod && targetKey == 'Shift')
+                                || (shortcutKey.keys.includes(targetKey.toUpperCase()))
+                            ) {
+                                doHighlight = true; 
                             }
                         }
                             
                         return (
-                            <Box bgcolor={highlightColor} fontSize={'x-large'} textAlign={'center'} flex={targetFlex} border={'solid'} 
+                            <Box bgcolor={doHighlight ? highlightColor : 'white'} fontSize={'x-large'} textAlign={'center'} flex={targetFlex} border={'solid'} 
                                 key={`${targetKey}-${targetKeyI}`}
                             >
                                 {(targetKey == 'Win' || targetKey == 'RWin') && targetPlatform == EKeyboardPlatform.MAC ? (targetKey == 'Win' ? 'Cmd' : 'RCmd') : targetKey}
@@ -216,27 +265,20 @@ const ShortcutGroupList = ({shortcutGroup, style={}, children}:{shortcutGroup:IS
     </Box>
 }
 
-const ShortcutItem = ({shortcut, setSelectedShortcut}:{shortcut:IShortcut, setSelectedShortcut:(target:IShortcut|undefined)=>void}) => {
+const ShortcutItem = ({shortcut, setSelectedShortcut}:{shortcut:IShortcut, setSelectedShortcut:(target:IShortcutKey|undefined, sequenceI:number)=>void}) => {
     const [isHovered, setIsHovered] = React.useState(false); 
 
-    const keySequences:string[] = []
-    for(const curSequence of shortcut.keySequence){
-        let target:string[] = []
-        if(curSequence.ctrlMod) target.push('Ctrl')
-        if(curSequence.altMod) target.push("Alt")
-        if(curSequence.shiftMod) target.push("Shift")
-        
-        target = [...target, ...curSequence.keys]
-        keySequences.push(target.join(" + "))
-    }
-
-    return <Box bgcolor={isHovered ? 'lightblue' : 'white'} display={'inline-grid'} 
-        gridTemplateColumns={'1fr auto'} width={'100%'} 
-        padding={1}
-        onMouseEnter={() => {setSelectedShortcut(shortcut); setIsHovered(true);}}
-        onMouseLeave={() => {setSelectedShortcut(undefined); setIsHovered(false);}}
-    >
-        <Typography level='body-lg'>{shortcut.name}</Typography>
-        <Typography level='body-lg'>{keySequences.join(" -> ")}</Typography>
+    return <Box display={'flex'} width={'100%'} padding={1}>
+        <Typography level='body-lg' sx={{marginRight: 'auto'}}>{shortcut.name}</Typography>
+        {shortcut.keySequence.map((seq, seqI) => {
+            return <>
+                <Chip  key={seqI}
+                    sx={{bgcolor: highlightColors[seqI]}}
+                    onMouseEnter={() => {setSelectedShortcut(seq, seqI); setIsHovered(true);}}
+                    onMouseLeave={() => {setSelectedShortcut(undefined, -1); setIsHovered(false);}}
+               >{shortcutKeyToString(seq)}</Chip>
+                {seqI != shortcut.keySequence.length - 1 && <ArrowRight />}
+            </>
+        })}
     </Box>
 }
