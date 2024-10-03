@@ -15,86 +15,127 @@ export enum FontFamily {
     Courier = "Courier",
     Tahoma = "Tahoma",
     Consolas = "Consolas",
+    Impact = 'Impact',
 }
 
 export enum ColorScheme {
-    Monokai = "Monokai",
-    Solarized = 'Solarized',
-    NordTheme = 'NordTheme',
-    Dracula = 'Dracula',
-    GruvboxDark = 'GruvboxDark',
-    OneDark = 'OneDark',
-    TokyoNight = 'TokyoNight',
+    Forest = "Forest",
+    Lagoon = 'Lagoon',
+    Ocean = "Ocean",
+    Sunset = "Sunset",
+    Lavender = "Lavender",
+    Mint = "Mint",
+    Berry = "Berry",
+    Autumn = "Autumn",
+    Arctic = "Arctic",
+    Tropical = "Tropical",
+    Vintage = "Vintage",
+    Neon = "Neon",
 }
   
 
 export interface ColorSchemeData {
     primary:Color, 
     secondary:Color, 
-    fontPrimary:Color,
-    fontSecondary:Color,
+    font:Color,
     accent:Color,
     nameFont:FontFamily
 }
 
-
+// ffb2e6-d972ff-8447ff-8cffda-ffffe8
 export const colorSchemes: { [key in ColorScheme]: ColorSchemeData } = {
-    [ColorScheme.Monokai]: {
-        primary: new Color('#272822'),
-        secondary: new Color('#3E3D32'),
-        fontPrimary: new Color('#F8F8F2'),
-        fontSecondary: new Color('#A6E22E'),
-        accent: new Color('#66D9EF'),
+    [ColorScheme.Forest]: {
+        primary: new Color('#8B9474'),
+        secondary: new Color('#6CAE75'),
+        font: new Color('#C1CC99'),
+        accent: new Color('#F5A65B'),
         nameFont: FontFamily.Consolas
     },
-    [ColorScheme.Solarized]: {
-        primary: new Color('#002b36'),
-        secondary: new Color('#073642'),
-        fontPrimary: new Color('#839496'),
-        fontSecondary: new Color('#93a1a1'),
-        accent: new Color('#2aa198'),
+    [ColorScheme.Lagoon]: {
+        primary: new Color('#ffb2e6'),
+        secondary: new Color('#ba72ff'),
+        font: new Color('#8447ff'),
+        accent: new Color('#8cffda'),
+        nameFont: FontFamily.Georgia
+    },[ColorScheme.Ocean]: {
+        primary: new Color('#1A5F7A'),
+        secondary: new Color('#57C5B6'),
+        font: new Color('#159895'),
+        accent: new Color('#FFE194'),
         nameFont: FontFamily.Helvetica
     },
-    [ColorScheme.NordTheme]: {
-        primary: new Color('#2E3440'),
-        secondary: new Color('#3B4252'),
-        fontPrimary: new Color('#D8DEE9'),
-        fontSecondary: new Color('#E5E9F0'),
-        accent: new Color('#88C0D0'),
-        nameFont: FontFamily.Roboto
-    },
-    [ColorScheme.Dracula]: {
-        primary: new Color('#282a36'),
-        secondary: new Color('#44475a'),
-        fontPrimary: new Color('#f8f8f2'),
-        fontSecondary: new Color('#6272a4'),
-        accent: new Color('#bd93f9'),
-        nameFont: FontFamily.Courier
-    },
-    [ColorScheme.GruvboxDark]: {
-        primary: new Color('#282828'),
-        secondary: new Color('#3c3836'),
-        fontPrimary: new Color('#ebdbb2'),
-        fontSecondary: new Color('#a89984'),
-        accent: new Color('#b8bb26'),
+    
+    [ColorScheme.Sunset]: {
+        primary: new Color('#FF7B54'),
+        secondary: new Color('#FFB26B'),
+        font: new Color('#FFD56F'),
+        accent: new Color('#939B62'),
         nameFont: FontFamily.Georgia
     },
-    [ColorScheme.OneDark]: {
-        primary: new Color('#282c34'),
-        secondary: new Color('#3e4451'),
-        fontPrimary: new Color('#abb2bf'),
-        fontSecondary: new Color('#5c6370'),
-        accent: new Color('#61afef'),
+    
+    [ColorScheme.Lavender]: {
+        primary: new Color('#8E7AB5'),
+        secondary: new Color('#B784B7'),
+        font: new Color('#E493B3'),
+        accent: new Color('#F7CACA'),
         nameFont: FontFamily.Verdana
     },
-    [ColorScheme.TokyoNight]: {
-        primary: new Color('#1a1b26'),
-        secondary: new Color('#24283b'),
-        fontPrimary: new Color('#a9b1d6'),
-        fontSecondary: new Color('#565f89'),
-        accent: new Color('#7aa2f7'),
+    
+    [ColorScheme.Mint]: {
+        primary: new Color('#4CAF50'),
+        secondary: new Color('#81C784'),
+        font: new Color('#C8E6C9'),
+        accent: new Color('#FFC107'),
+        nameFont: FontFamily.Arial
+    },
+    
+    [ColorScheme.Berry]: {
+        primary: new Color('#9C27B0'),
+        secondary: new Color('#E91E63'),
+        font: new Color('#F48FB1'),
+        accent: new Color('#FF9800'),
+        nameFont: FontFamily.Courier
+    },
+    
+    [ColorScheme.Autumn]: {
+        primary: new Color('#D35400'),
+        secondary: new Color('#E67E22'),
+        font: new Color('#F39C12'),
+        accent: new Color('#27AE60'),
+        nameFont: FontFamily.TimesNewRoman
+    },
+    
+    [ColorScheme.Arctic]: {
+        primary: new Color('#34495E'),
+        secondary: new Color('#5D6D7E'),
+        font: new Color('#85929E'),
+        accent: new Color('#3498DB'),
+        nameFont: FontFamily.Calibri
+    },
+    
+    [ColorScheme.Tropical]: {
+        primary: new Color('#16A085'),
+        secondary: new Color('#1ABC9C'),
+        font: new Color('#48C9B0'),
+        accent: new Color('#F1C40F'),
         nameFont: FontFamily.Tahoma
-    }
+    },
+    
+    [ColorScheme.Vintage]: {
+        primary: new Color('#7E5109'),
+        secondary: new Color('#B87333'),
+        font: new Color('#D4AF37'),
+        accent: new Color('#614051'),
+        nameFont: FontFamily.Garamond
+    },
+    
+    [ColorScheme.Neon]: {
+        primary: new Color('#FF00FF'),
+        secondary: new Color('#00FFFF'),
+        font: new Color('#FFFF00'),
+        accent: new Color('#FF1493'),
+        nameFont: FontFamily.Impact
+    }    
 }
 
 

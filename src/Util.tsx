@@ -1,6 +1,7 @@
 import Color from "colorjs.io";
 import { ColorScheme, ColorSchemeData, colorSchemes } from "./Themes";
 import { IApplication, IShortcutKey } from "./types";
+import SpaceAccessors from "colorjs.io/types/src/space-coord-accessors";
 
 const BASE_URI = "http://localhost:8001"
 
@@ -72,12 +73,17 @@ export const generateUUID = () => {
     return uuid;
 }
 
-export const getColor = (props:{scheme:ColorScheme, colorField:keyof ColorSchemeData, scale?:number, isDark:boolean}):string => {
-    if(props.isDark){
-        return colorSchemes[props.scheme][props.colorField].toString()
-    }else {
-        const tmp = new Color(colorSchemes[props.scheme][props.colorField].toString())
-        tmp.lighten(2)
-        return tmp.toString()
+export const getColor = (props:{scheme:ColorScheme, colorField:keyof ColorSchemeData, scale?:number}):string => {
+    const tmp = new Color(colorSchemes[props.scheme][props.colorField].toString())
+    if(props.scale) {
+        tmp.r *= props.scale;
+        tmp.g *= props.scale;
+        tmp.b *= props.scale;
     }
+    // if(props.scale && props.scale > 0){
+        
+    // }else if(props.scale && props.scale < 0) {
+    //     tmp.darken(Math.abs(props.scale))
+    // } 
+    return tmp.toString()
 }

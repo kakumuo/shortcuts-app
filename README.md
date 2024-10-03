@@ -4,6 +4,7 @@
 - React
 - Typescript
 - JOY MaterialUI
+- Color.js
 
 > Dependencies - Backend
 - Typescript
@@ -32,7 +33,8 @@
 - ~~Delete application through ui~~
 - ~~Create application through ui~~
 - Allow for main page color scheme to be changed from select color schemes
-- Allow for main page themes to be changed from select themes
+- ~~Allow for main page themes to be changed from select themes~~ [removed]
+- Home Page
 - General beautification 
     - Use Icons where possible
 

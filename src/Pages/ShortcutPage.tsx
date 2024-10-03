@@ -2,7 +2,7 @@ import React from 'react'
 import { useLocation, useParams } from 'react-router'
 import { IApplication, IShortcut, IShortcutGroup, IShortcutKey } from '../types';
 import { Box, Chip, Dropdown, IconButton, Input, Menu, MenuButton, MenuItem, Option, Select, Typography } from '@mui/joy';
-import { deleteApplication, getApplication, getColor, shortcutKeyToString, upsertApplication } from '../Util';
+import { deleteApplication, getApplication, shortcutKeyToString, upsertApplication } from '../Util';
 import { ArrowRight, CloseOutlined, FavoriteOutlined, MoreHorizOutlined, StarBorderOutlined, StarOutline, StarOutlined, StarsOutlined } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { AppContext } from '../App';
@@ -22,6 +22,8 @@ const highlightColors = [
     "lightsteelblue",
     "lightyellow"
 ];
+
+
   
 export const ShortcutPage = () => {
     const {applicationId} = useParams();
@@ -30,10 +32,10 @@ export const ShortcutPage = () => {
     const [appData, setAppData] = React.useState<IApplication>(); 
     const [targetAppData, setTargetAppData] = React.useState<IApplication>(); 
     const [targetShortcut, setTargetShortcut] = React.useState<IShortcutKey>(); 
-    const [targetHighlight, setTargetHighlight] = React.useState("white")
     const [targetLayout, setTargetLayout] = React.useState<EKeyboardLayout>(EKeyboardLayout.QUERTY); 
     const [targetPlatform, setTargetPlatform] = React.useState<EKeyboardPlatform>(EKeyboardPlatform.WINDOWS); 
     const [searchFilter, setSearchFilter] = React.useState<string|undefined>(undefined); 
+    const [highlightSeqI, setHighlightSeqI] = React.useState<number>(-1)
 
     React.useEffect(() => {
         ;(async() => {
@@ -106,13 +108,13 @@ export const ShortcutPage = () => {
 
     return <Box display={'flex'} flexDirection={'column'} width={'100%'} height={'100%'} gap={2}>
         <Box display={'grid'} gridTemplateColumns={'auto 1fr auto'} role='header'> 
-            <IconButton onClick={() => handleFav(!targetAppData?.fav)}>{targetAppData?.fav ? <StarOutlined /> : <StarBorderOutlined />}</IconButton>
+            <IconButton onClick={() => handleFav(!targetAppData?.fav)}>{targetAppData?.fav ? <StarOutlined sx={{color: 'success.500'}} /> : <StarBorderOutlined sx={{color: 'primary.900'}}/>}</IconButton>
             <Typography level='h2'>{appData?.name}</Typography>
             <Dropdown>
-                <MenuButton slots={{root: IconButton}}><MoreHorizOutlined /></MenuButton>
-                <Menu>
-                    <MenuItem><Link to="./edit">Edit</Link></MenuItem>
-                    <MenuItem onClick={handleExportData}>Export to Json</MenuItem>
+                <MenuButton color='primary' slots={{root: IconButton}}><MoreHorizOutlined /></MenuButton>
+                <Menu sx={{bgcolor: 'background.level3'}} color='primary'>
+                    <MenuItem color='primary' sx={{color: 'text.primary'}}><Link to="./edit" style={{textDecoration: 'none', width: '100%'}}>Edit</Link></MenuItem>
+                    <MenuItem color='primary' sx={{color: 'text.primary'}} onClick={handleExportData}>Export to Json</MenuItem>
                     <MenuItem color='danger' onClick={handleDelete}>Delete</MenuItem>
                 </Menu>
             </Dropdown>
@@ -126,7 +128,7 @@ export const ShortcutPage = () => {
                 {Object.keys(EKeyboardLayout).map((layout, layoutI) => <Option key={layoutI} value={layout}>{layout}</Option>)}
             </Select>
 
-            <DisplayKeyboard targetPlatform={targetPlatform} targetLayout={targetLayout} shortcutKey={targetShortcut} highlightColor = {targetHighlight}
+            <DisplayKeyboard targetPlatform={targetPlatform} targetLayout={targetLayout} shortcutKey={targetShortcut} seqI={highlightSeqI}
             />
         </Box>
 
@@ -144,11 +146,11 @@ export const ShortcutPage = () => {
     
         <Box maxWidth={'100%'} height={'100%'} display={'flex'} flexDirection={'row'} flexWrap={'wrap'} sx={{overflowY: 'scroll'}} alignContent={'stretch'} gap={2}>
             {targetAppData && targetAppData.groups.map((sGroup, sGroupI) => 
-                <ShortcutGroupList key={sGroupI} shortcutGroup={sGroup} style={{border: 'solid', borderRadius: '10px', flex: '1 1 auto', padding: 10}}>
+                <ShortcutGroupList key={sGroupI} shortcutGroup={sGroup} style={{backgroundColor: 'background.backdrop', border: 'solid', borderColor: 'primary.500', borderRadius: '10px', flex: '1 1 auto', padding: 3}}>
                     {sGroup.shortcuts.map((sCut, sCutI) => <ShortcutItem key={`${sGroupI}-${sCutI}`} shortcut={sCut} 
                     setSelectedShortcut={(sc, highlightI) => {
                         setTargetShortcut(sc)
-                        setTargetHighlight(highlightColors[highlightI])
+                        setHighlightSeqI(highlightI)
                     }}/>)
                     }
                 </ShortcutGroupList>
@@ -212,12 +214,13 @@ enum EKeyboardPlatform {
     WINDOWS = 'WINDOWS',
 }
 const DisplayKeyboard = (
-        {targetPlatform=EKeyboardPlatform.WINDOWS, targetLayout=EKeyboardLayout.QUERTY, shortcutKey=undefined, highlightColor}
-        :{targetPlatform:EKeyboardPlatform, targetLayout:EKeyboardLayout, shortcutKey:IShortcutKey|undefined, highlightColor:string}
+        {targetPlatform=EKeyboardPlatform.WINDOWS, targetLayout=EKeyboardLayout.QUERTY, shortcutKey=undefined, seqI}
+        :{targetPlatform:EKeyboardPlatform, targetLayout:EKeyboardLayout, shortcutKey:IShortcutKey|undefined, seqI:number}
     ) => {
 
+
     return (
-        <Box display={'inline-grid'} width={'90%'} height={'60%'} position={'absolute'} top={'50%'} left={'50%'} border={'solid'} sx={{transform: 'translate(-50%, -50%)'}}>
+        <Box display={'inline-grid'} width={'90%'} height={'60%'} position={'absolute'} top={'50%'} left={'50%'} sx={{transform: 'translate(-50%, -50%)'}}>
             {
                 [functionRow, ...layoutMap[targetLayout]].map((layoutRow, layoutRowI) => {
                     return <Box key={layoutRowI} display={'flex'}>{layoutRow.map((targetKey, targetKeyI) => {
@@ -243,9 +246,10 @@ const DisplayKeyboard = (
                                 doHighlight = true; 
                             }
                         }
-                            
+
                         return (
-                            <Box bgcolor={doHighlight ? highlightColor : 'white'} fontSize={'x-large'} textAlign={'center'} flex={targetFlex} border={'solid'} 
+                            <Box bgcolor={doHighlight ? `success.${(seqI+1) * 100}` : 'background.level3'} fontSize={'x-large'} textAlign={'center'} flex={targetFlex} 
+                                border={'solid'} borderColor={'primary.500'} color={'text.secondary'}
                                 key={`${targetKey}-${targetKeyI}`}
                             >
                                 {(targetKey == 'Win' || targetKey == 'RWin') && targetPlatform == EKeyboardPlatform.MAC ? (targetKey == 'Win' ? 'Cmd' : 'RCmd') : targetKey}
@@ -259,7 +263,7 @@ const DisplayKeyboard = (
 }
 
 const ShortcutGroupList = ({shortcutGroup, style={}, children}:{shortcutGroup:IShortcutGroup ,style?:React.CSSProperties, children:any}) => {
-    return <Box style={{...style, display: 'inline-block'}}>
+    return <Box sx={{...style, display: 'inline-block'}}>
         <Typography level='h4'>{shortcutGroup.name}</Typography>
         {children}
     </Box>
@@ -273,7 +277,7 @@ const ShortcutItem = ({shortcut, setSelectedShortcut}:{shortcut:IShortcut, setSe
         {shortcut.keySequence.map((seq, seqI) => {
             return <>
                 <Chip  key={seqI}
-                    sx={{bgcolor: highlightColors[seqI]}}
+                    sx={{bgcolor: `success.${(seqI+1) * 100}`}}
                     onMouseEnter={() => {setSelectedShortcut(seq, seqI); setIsHovered(true);}}
                     onMouseLeave={() => {setSelectedShortcut(undefined, -1); setIsHovered(false);}}
                >{shortcutKeyToString(seq)}</Chip>

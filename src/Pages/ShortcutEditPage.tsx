@@ -50,7 +50,7 @@ export const ShortcutEditPage = () => {
     }
 
     return <ShortcutEditPageContext.Provider value={{appData, setAppData}}>
-        <Box display={'grid'} gridTemplateRows={'auto 1fr auto'} overflow={'hidden'} gap={2}>
+        <Box display={'grid'} gridTemplateRows={'auto 1fr auto'} overflow={'hidden'} gap={2} bgcolor={'background.level2'} >
             
             {/* header */}
             <Box display={'grid'} gridTemplateColumns={'auto 1fr'} gap={2}>
@@ -63,14 +63,14 @@ export const ShortcutEditPage = () => {
 
             {/* Footer */}
             <Box display={'flex'} justifyContent={'end'} gap={2}>
-                <Button variant='soft' onClick={handleSaveData}>Save</Button>
-                <Button variant='soft' onClick={() => {
+                <Button variant='solid' onClick={handleSaveData}>Save</Button>
+                <Button variant='solid' onClick={() => {
                     handleSaveData()
                     setTimeout(() => {
                         document.location.href = prevPath
                     }, .5 * 1000)
                 }}>Apply</Button>
-                <Button variant='soft' color='danger'><Link style={{textDecorationLine: 'none'}} to={prevPath}>Cancel</Link></Button>
+                <Button variant='solid' color='danger'><Link style={{textDecorationLine: 'none'}} to={prevPath}>Cancel</Link></Button>
             </Box>
         </Box>
     </ShortcutEditPageContext.Provider>
@@ -248,6 +248,7 @@ const ValueEditChip = ({shortcutKey, onUpdateKey, onDeleteKey}:{shortcutKey:ISho
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         sx={{fontSize: 'larger', minWidth: "100px", textAlign: 'end'}}
+        variant='solid'
         onKeyUp={(ev) => {
             ev.stopPropagation();
             ev.preventDefault();
@@ -274,7 +275,7 @@ const ValueEditChip = ({shortcutKey, onUpdateKey, onDeleteKey}:{shortcutKey:ISho
             else 
                 onUpdateKey(curKey)
         }}
-        color={isEditing ? 'success' : isHovered ? 'primary' : 'neutral'}
+        color={isEditing ? 'success' : isHovered ? 'neutral' : 'primary'}
     >
         {shortcutKeyToString(curKey)}
         <ChipDelete onDelete={onDeleteKey} />
